@@ -1,0 +1,67 @@
+import pandas as pd
+
+# Carrego les dades
+from google.colab import drive
+drive.mount('/content/drive')
+produccio= pd.read_csv(
+    '/content/drive/MyDrive/visualitzacio_de_les_dades/PR1/Process.csv', sep=';')
+	
+produccio.info()
+
+# Estadístiques descriptives
+produccio.describe()
+
+# Verifica si hi ha valors nuls
+produccio.isnull().sum()
+
+Laboratory= pd.read_csv(
+    '/content/drive/MyDrive/visualitzacio_de_les_dades/PR1/Laboratory.csv', sep=';')
+	
+# Convertir la columna 'dissolution_av' de object a float64
+Laboratory['dissolution_av'] = pd.to_numeric(Laboratory['dissolution_av'], errors='coerce')
+
+Laboratory.info()
+
+# Estadístiques descriptives
+Laboratory.describe()
+
+# Verifica si hi ha valors nuls
+Laboratory.isnull().sum()
+
+# Unir els datasets per les columnes 'batch' i 'code'
+result = pd.merge(Laboratory, produccio, on=['batch', 'code'], how='outer')  # 'outer' per a una unió completa
+
+# Visualitzar el resultat
+print(result)
+
+# Comptar les vegades que es repeteix cada valor en la columna 'code'
+recompte = Laboratory['code'].value_counts()
+
+# Mostrar els resultats
+print(recompte)
+
+# Filtrar el dataset per a les diferents condicions de la columna 'code'
+dataset_code_17 = result[result['code'] == 17]
+
+
+# Mostrar els primers 5 registres de cada dataset per a la comprovació
+print("Dataset amb code 17:")
+print(dataset_code_17.head())
+
+
+# Filtrar les columnes numèriques per a cada dataset
+df = dataset_code_17.select_dtypes(include=['number'])
+
+
+df.info()
+
+# Estadístiques descriptives
+df.describe()
+
+# Verifica si hi ha valors nuls
+df.isnull().sum()
+
+df.to_csv('/content/df.csv', index=False)
+
+from google.colab import files
+files.download('/content/df.csv')

@@ -1,0 +1,217 @@
+import pandas as pd
+
+# Carrego les dades
+from google.colab import drive
+drive.mount('/content/drive')
+df= pd.read_csv(
+    '/content/drive/MyDrive/visualitzacio_de_les_dades/Tractament/df.csv')
+	
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Seleccionar les variables d'interès
+correlation_vars = ['impurities_total', 'Drug release average', 'lactose_sieve0045', 'main_CompForce mean', 'tbl_tensile']
+
+# Calcular la matriu de correlació
+corr_matrix = df[correlation_vars].corr()
+
+# Visualitzar la matriu de correlació com una heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", cbar=True)
+plt.title("Matriu de Correlació")
+plt.show()
+
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Suposem que les dades es troben en un DataFrame anomenat `data`
+# Variables a visualitzar
+variables = [
+    'Drug release average', 'lactose_sieve0045', 'main_CompForce mean', 'tbl_tensile'
+]
+
+# Crear gràfics per a cada variable
+for var in variables:
+    if var in df.columns:
+        plt.figure(figsize=(12, 6))
+
+        # Boxplot
+        plt.subplot(1, 2, 1)
+        sns.boxplot(x=df[var], color='skyblue')
+        plt.title(f'Boxplot de {var}')
+        plt.xlabel(var)
+
+        # Histograma
+        plt.subplot(1, 2, 2)
+        sns.histplot(df[var], kde=True, color='green', bins=20)
+        plt.title(f'Histograma de {var}')
+        plt.xlabel(var)
+        plt.ylabel('Freqüència')
+
+        # Mostrar els gràfics
+        plt.tight_layout()
+        plt.show()
+		
+		
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# Ordenar les dades per impurities_total en ordre ascendent
+data_sorted = df.sort_values(by='impurities_total', ascending=True)
+
+# Extreure les 15 observacions amb les impureses més baixes
+lowest_impurities = data_sorted.head(15)
+
+# Extreure les 15 observacions amb les impureses més altes
+highest_impurities = data_sorted.tail(15)
+
+# Opcional: guardar els datasets en arxius CSV
+lowest_impurities.to_csv('lowest_impurities.csv', index=False)
+highest_impurities.to_csv('highest_impurities.csv', index=False)
+
+
+
+
+
+# Variables numèriques per analitzar
+numerical_vars = ['Drug release average', 'lactose_sieve0045', 'main_CompForce mean', 'tbl_tensile']
+
+# Iterar sobre cada variable numèrica per generar els gràfics
+for var in numerical_vars:
+    if var in lowest_impurities.columns and var in highest_impurities.columns:
+        plt.figure(figsize=(10, 6))
+
+        # Crear histogram superposat
+        sns.histplot(lowest_impurities[var], bins=10, color='blue', label='Lowest Impurities', kde=True, alpha=0.6)
+        sns.histplot(highest_impurities[var], bins=10, color='red', label='Highest Impurities', kde=True, alpha=0.6)
+
+        # Títol i etiquetes
+        plt.title(f'Comparació de {var}: Lowest vs Highest Impurities')
+        plt.xlabel(var)
+        plt.ylabel('Freqüència')
+        plt.legend()
+
+        # Mostrar el gràfic
+        plt.tight_layout()
+        plt.show()
+		
+		
+# Classificar els lots
+df['color'] = 'others'  # Assignar 'others' per defecte
+df.loc[df['impurities_total'].nlargest(20).index, 'color'] = 'high'  # 20 amb més impureses
+df.loc[df['impurities_total'].nsmallest(20).index, 'color'] = 'low'   # 20 amb menys impureses
+
+# Assignar colors personalitzats
+colors_map = {'high': 'red', 'low': 'blue', 'others': 'silver'}
+
+plt.figure(figsize=(30, 28))
+
+# Crear el bubble chart
+scatter = sns.scatterplot(
+    x='lactose_sieve0045',
+    y='main_CompForce mean',
+    size='impurities_total',
+    sizes=(1000, 30000),
+    hue='color',  # Utilitzar el color assignat
+    palette=colors_map,
+    data=df,
+    alpha=0.7,
+)
+
+# Afegir el lot (batch) només per als 20 amb més i menys impureses
+for i in range(df.shape[0]):
+    if df['color'].iloc[i] in ['high', 'low']:
+        plt.text(
+            df['lactose_sieve0045'].iloc[i],
+            df['main_CompForce mean'].iloc[i],
+            df['batch'].iloc[i],
+            fontsize=15,
+            ha='center',
+            va='center',
+            color='black'
+        )
+
+plt.title('Relació entre Mida de Partícula, Força de Compressió i Impureses', fontsize=30)
+plt.xlabel('Mida de Partícula de Lactosa (µm)', fontsize=30)
+plt.ylabel('Força de Compressió', fontsize=30)
+# Crear la llegenda manual per a impurities_total (mida de les boles)
+legend_labels_sizes = [0.08, 0.12, 0.16, 0.20, 0.24, 0.28]
+bubble_sizes = [100, 200, 400, 600, 800, 1000]  # Ajusta aquestes mides
+bubble_legend_sizes = [plt.scatter([], [], s=size, color="silver", alpha=0.7) for size in bubble_sizes]
+
+# Augmentar la mida dels números dels eixos
+plt.tick_params(axis='both', which='major', labelsize=20)  # Augmenta els ticks principals
+
+# Crear la llegenda manual per als colors (high, low, others)
+legend_labels_colors = ['high', 'low', 'others']
+bubble_colors = [plt.scatter([], [], s=500, color=colors_map[label], alpha=0.7) for label in legend_labels_colors]
+
+# Afegir les dues llegendes
+first_legend = plt.legend(
+    bubble_colors,
+    legend_labels_colors,
+    title="Quantitat impureses",
+    title_fontsize=30,
+    fontsize=25,
+    loc='upper right',
+    bbox_to_anchor=(0.99, 0.99),
+    borderpad=1
+)
+
+second_legend = plt.legend(
+    bubble_legend_sizes,
+    legend_labels_sizes,
+    title="Quantitat impureses",
+    title_fontsize=30,
+    labelspacing=1.5,
+    fontsize=25,
+    loc='center left',
+    bbox_to_anchor=(0.76, 0.69),
+    borderpad=1
+)
+
+# Afegir la primera llegenda a l'eix actual
+plt.gca().add_artist(first_legend)
+plt.show()
+
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Seleccionem les variables d'interès
+variables_clau = [
+    'Drug release average',  # Assegura't que aquest és el nom correcte
+    'lactose_sieve0045',
+    'main_CompForce mean',
+    'tbl_tensile',
+    'impurities_total'
+]
+
+# Comprovar si totes les variables clau existeixen
+for var in variables_clau:
+    if var not in df.columns:
+        print(f"Error: La variable '{var}' no existeix al DataFrame.")
+
+# Crear el pairplot
+pairplot = sns.pairplot(
+    df[variables_clau + ['batch']],  # Inclou la columna 'batch'
+    diag_kind=None,  # Això elimina la diagonal
+    palette='tab10',
+    corner=True
+)
+
+# Eliminar la llegenda de tots els subgràfics
+for ax in pairplot.axes.flat:  # Recorre tots els eixos
+    if ax is not None:
+        # Si el gràfic té una llegenda, la elimina
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.remove()
+
+# Afegir un títol al gràfic
+plt.suptitle('Relacions entre les Variables Clau', y=1.0)
+plt.show()
